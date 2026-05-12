@@ -50,19 +50,14 @@ export const MultiplayerClientMixin = (ClientClass) => class extends ClientClass
 
   // if a banned/kicked user tries to join a this.room they were removed from this is the response
   ackRemovedFromRoom ({ removalType }) {
-    if (removalType === 'kick') {
-      window.alert('You were kicked from this room by room players, and cannot rejoin it.');
-    } else {
-      window.alert('You were banned from this room by the room owner, and cannot rejoin it.');
-    }
-    setTimeout(() => {
-      window.location.replace('../');
-    }, 100);
+    const message = removalType === 'kick'
+      ? 'You were kicked from this room by room players, and cannot rejoin it.'
+      : 'You were banned from this room by the room owner, and cannot rejoin it.';
+    showRoomNotification(message, '../');
   }
 
   adminLock ({ message }) {
-    window.alert(message);
-    window.location.replace('/play/mp');
+    showRoomNotification(message, '/play/mp');
   }
 
   buzz ({ userId, username }) {
@@ -121,10 +116,7 @@ export const MultiplayerClientMixin = (ClientClass) => class extends ClientClass
 
   confirmBan ({ targetId, targetUsername }) {
     if (targetId === this.USER_ID) {
-      window.alert('You were banned from this room by the room owner.');
-      setTimeout(() => {
-        window.location.replace('../');
-      }, 100);
+      showRoomNotification('You were banned from this room by the room owner.', '../');
     } else {
       this.logEventConditionally(targetUsername + ' has been banned from this room.');
     }
@@ -378,8 +370,7 @@ export const MultiplayerClientMixin = (ClientClass) => class extends ClientClass
 
   handleError ({ message }) {
     this.socket.close(3000);
-    window.alert(message);
-    window.location.href = '/multiplayer';
+    showRoomNotification(message, '/multiplayer');
   }
 
   join ({ isNew, team, user, userId, username }) {
@@ -764,10 +755,7 @@ export const MultiplayerClientMixin = (ClientClass) => class extends ClientClass
 
   vkHandle ({ targetUsername, targetId }) {
     if (this.USER_ID === targetId) {
-      window.alert('You were vote kicked from this room by others.');
-      setTimeout(() => {
-        window.location.replace('../');
-      }, 100);
+      showRoomNotification('You were vote kicked from this room by others.', '../');
     } else {
       this.logEventConditionally(targetUsername + ' has been vote kicked from this room.');
     }
@@ -792,6 +780,18 @@ function attachEventListeners (room, socket, client) {
       li.classList.toggle('d-none', client.distractionFreeMode);
     });
   });
+}
+
+// links to the room notification modal for the custom css alert
+function showRoomNotification (message, redirectUrl = null) {
+  document.getElementById('room-notification-message').textContent = message;
+  const modal = new window.bootstrap.Modal(document.getElementById('room-notification-modal'));
+  modal.show();
+  if (redirectUrl) {
+    document.getElementById('room-notification-ok').addEventListener('click', () => {
+      window.location.replace(redirectUrl);
+    }, { once: true });
+  }
 }
 
 const MultiplayerTossupBonusClient = MultiplayerClientMixin(TossupBonusClient);

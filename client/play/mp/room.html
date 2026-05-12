@@ -208,6 +208,22 @@
 
     <div id="category-modal-root"></div>
 
+    <div class="modal" id="room-notification-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-black">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Notice</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0" id="room-notification-message"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="room-notification-ok" type="button">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="disconnected-modal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
