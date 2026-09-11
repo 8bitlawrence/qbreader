@@ -3,6 +3,9 @@ import { DEFAULT_MIN_YEAR, DEFAULT_MAX_YEAR, MODE_ENUM } from './constants.js';
 import CategoryManager from './category-manager.js'; // eslint-disable-line no-unused-vars
 import Room from './Room.js';
 
+// eslint-disable-next-line no-unused-vars
+import * as types from '../types.js';
+
 export default class QuestionRoom extends Room {
   /**
    * @param {*} name
@@ -11,14 +14,6 @@ export default class QuestionRoom extends Room {
    */
   constructor (name, categoryManager, supportedQuestionTypes) {
     super(name);
-
-    this.checkAnswer = function checkAnswer (answerline, givenAnswer, strictness = 7) { throw new Error('Not implemented'); };
-    this.getRandomBonuses = async function getRandomBonuses (args) { throw new Error('Not implemented'); };
-    this.getRandomTossups = async function getRandomTossups (args) { throw new Error('Not implemented'); };
-    this.getPacket = async function getPacket (args) { throw new Error('Not implemented'); };
-    this.getPacketCount = async function getPacketCount (setName) { throw new Error('Not implemented'); };
-    this.getStarredTossup = async function getStarredTossup () { throw new Error('Not implemented'); };
-    this.getStarredBonus = async function getStarredBonus () { throw new Error('Not implemented'); };
 
     if (!Array.isArray(supportedQuestionTypes) || supportedQuestionTypes.length === 0) {
       throw new Error('supportedQuestionTypes must be a non-empty array');
@@ -126,6 +121,15 @@ export default class QuestionRoom extends Room {
     }
   }
 
+  /**
+   * @abstract
+   * @param {string} answerline
+   * @param {string} givenAnswer
+   * @param {number} [strictness]
+   * @returns {{directive: 'accept' | 'reject' | 'prompt', directedPrompt?: string}}
+   */
+  checkAnswer (answerline, givenAnswer, strictness = 7) { throw new Error('Not implemented'); }
+
   async getNextQuestion (questionType) {
     if (!this.supportedQuestionTypes.includes(questionType)) { return; }
     this.queryingQuestion = true;
@@ -184,9 +188,51 @@ export default class QuestionRoom extends Room {
     return this.localPacket[questionType].shift();
   }
 
+  /**
+   * @abstract
+   * @param {object} args
+   * @param {string} args.setName
+   * @param {number} args.packetNumber - one-indexed packet number
+   * @returns {Promise<{tossups?: types.Tossup[], bonuses?: types.Bonus[]}>}
+   */
+  async getPacket (args) { throw new Error('Not implemented'); }
+
+  /**
+   * @abstract
+   * @param {string} setName
+   * @returns {Promise<number>}
+   */
+  async getPacketCount (setName) { throw new Error('Not implemented'); }
+
+  /**
+   * @abstract
+   * @param {object} args
+   * @returns {Promise<types.Bonus[]>}
+   */
+  async getRandomBonuses (args) { throw new Error('Not implemented'); }
+
   getRandomQuestions (questionType, query) {
     return questionType === 'tossups' ? this.getRandomTossups(query) : this.getRandomBonuses(query);
   }
+
+  /**
+   * @abstract
+   * @param {object} args
+   * @returns {Promise<types.Tossup[]>}
+   */
+  async getRandomTossups (args) { throw new Error('Not implemented'); }
+
+  /**
+   * @abstract
+   * @returns {Promise<types.Bonus | null>}
+   */
+  async getStarredBonus () { throw new Error('Not implemented'); }
+
+  /**
+   * @abstract
+   * @returns {Promise<types.Tossup | null>}
+   */
+  async getStarredTossup () { throw new Error('Not implemented'); }
 
   setCategories ({ username }, { categories, subcategories, alternateSubcategories, percentView, categoryPercents }) {
     if (!Array.isArray(categories)) { return; }

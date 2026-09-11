@@ -28,6 +28,12 @@ async function getPacket ({ setName, packetNumber }) {
 }
 
 export default class SoloTossupRoom extends TossupRoom {
+  checkAnswer = api.checkAnswer;
+  getPacket = getPacket;
+  getPacketCount = api.getNumPackets;
+  getRandomTossups = async (args) => await api.getRandomTossup({ ...args });
+  getStarredTossup = getStarredTossup;
+
   constructor (name, categoryManager) {
     super(name, categoryManager, ['tossups']);
 
@@ -38,12 +44,6 @@ export default class SoloTossupRoom extends TossupRoom {
       showHistory: true,
       typeToAnswer: true
     };
-
-    this.checkAnswer = api.checkAnswer;
-    this.getRandomTossups = async (args) => await api.getRandomTossup({ ...args });
-    this.getPacket = getPacket;
-    this.getStarredTossup = getStarredTossup;
-    this.getPacketCount = api.getNumPackets;
   }
 
   async message ({ userId, username }, message) {
