@@ -27,14 +27,14 @@ async function getRandomStarredBonus () {
 }
 
 export default class SoloBonusRoom extends BonusRoom {
+  checkAnswer = api.checkAnswer;
+  getPacket = getPacket;
+  getPacketCount = api.getNumPackets;
+  getRandomBonuses = api.getRandomBonus;
+  getStarredBonus = getRandomStarredBonus;
+
   constructor (name, categoryManager) {
     super(name, categoryManager, ['bonuses']);
-
-    this.checkAnswer = api.checkAnswer;
-    this.getRandomBonuses = api.getRandomBonus;
-    this.getPacket = getPacket;
-    this.getStarredBonus = getRandomStarredBonus;
-    this.getPacketCount = api.getNumPackets;
 
     this.settings = {
       ...this.settings,
