@@ -60,6 +60,7 @@ export const TossupRoomMixin = (QuestionRoomClass) => class extends QuestionRoom
       case 'next': return this.next({ userId, username }, message);
       case 'pause': return this.pause({ userId, username }, message);
       case 'set-reading-speed': return this.setReadingSpeed({ userId, username }, message);
+      case 'toggle-correct': return this.toggleCorrect({ userId, username }, message);
       case 'toggle-powermark-only': return this.togglePowermarkOnly({ userId, username }, message);
       case 'toggle-rebuzz': return this.toggleRebuzz({ userId, username }, message);
       case 'toggle-stop-on-power': return this.toggleStopOnPower({ userId, username }, message);
@@ -270,9 +271,12 @@ export const TossupRoomMixin = (QuestionRoomClass) => class extends QuestionRoom
       inPower,
       inSuperpower,
       isCorrect,
-      tossup: this.tossup,
-      userId: this.buzzedIn
+      tossup: this.tossup
     };
+
+    if (this.buzzedIn) {
+      this.previousTossup.userId = this.buzzedIn;
+    }
 
     return { celerity, directive, directedPrompt, endOfQuestion, inPower, inSuperpower, points };
   }
@@ -296,6 +300,45 @@ export const TossupRoomMixin = (QuestionRoomClass) => class extends QuestionRoom
     this.tossupProgress = TOSSUP_PROGRESS_ENUM.READING;
     clearTimeout(this.timeoutID);
     this.readTossup(Date.now());
+  }
+
+  /**
+   * @param {object} params
+   * @param {boolean} params.correct whether the answer was correct. If `correct=true`, then the player's score increases after calling this function.
+   * @param {string} params.targetUserId the ID of the user whose answer is being toggled.
+   * @returns
+   */
+  toggleCorrect ({ userId, username }, { targetUserId }) {
+    if (targetUserId !== this.previousTossup.userId) { return; }
+    if (!this.players[targetUserId]) { return; }
+
+    const correct = !this.previousTossup.isCorrect;
+    this.previousTossup.isCorrect = correct;
+    const multiplier = correct ? 1 : -1;
+
+    if (this.previousTossup.inSuperpower) {
+      this.players[targetUserId].superpowers += multiplier * 1;
+      this.players[targetUserId].points += multiplier * this.previousTossup.superpowerValue;
+    } else if (this.previousTossup.inPower) {
+      this.players[targetUserId].powers += multiplier * 1;
+      this.players[targetUserId].points += multiplier * this.previousTossup.powerValue;
+    } else {
+      this.players[targetUserId].tens += multiplier * 1;
+      this.players[targetUserId].points += multiplier * 10;
+    }
+
+    if (this.previousTossup.endOfQuestion) {
+      this.players[targetUserId].dead += multiplier * -1;
+    } else {
+      this.players[targetUserId].negs += multiplier * -1;
+      this.players[targetUserId].points += multiplier * -this.previousTossup.negValue;
+    }
+
+    const correctBuzzes = this.players[targetUserId].superpowers + this.players[targetUserId].powers + this.players[targetUserId].tens;
+    this.players[targetUserId].celerity.correct.total += multiplier * this.previousTossup.celerity;
+    this.players[targetUserId].celerity.correct.average = this.players[targetUserId].celerity.correct.total / correctBuzzes;
+
+    this.emitMessage({ type: 'toggle-correct', correct, targetUserId, player: this.players[targetUserId] });
   }
 
   togglePowermarkOnly ({ username }, { powermarkOnly }) {
